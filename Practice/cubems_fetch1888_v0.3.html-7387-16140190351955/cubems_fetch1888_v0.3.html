@@ -1,0 +1,135 @@
+<!--File: cubems_fetch1888_v0.3.html
+
+Class: 2102541 IoT Fundamentals
+Department of Electrical Engineering
+Faculty of Engineering, Chulalongkorn University
+
+Code Purpose:
+
+To demo IEEE1888-fetch on CU-BEMS. The code is written to optimise its readability.
+To use it for a production scale, an additional work is required especially on uses
+of 'cursor' to flow-control IEEE1888-fetch in requested data batches of proper size.
+
+Ver 0.1 Written by: Dr C Aswakul (8 Feb 2019)
+
+Ver 0.2 Modified by: Dr C Aswakul (24 Feb 2020)
+- specify port 9062 in the variable 'cubemsstorage' to be used for POST method
+
+Ver 0.3 Modified by: Dr C Aswakul (23 Feb 2021)
+- update slightly point-id example to be downloadable from current CU-BEMS storage
+- extract from xml and show as list of time and value pairs 
+
+-->
+
+<html>
+
+<head>
+    <title>IoT Fundamental Class, Department of Electrical Engineering,
+    Faculty of Engineering, Chulalogkorn University</title>
+    
+    <script type="text/javascript">
+		
+        function cubemsfetch1888(pointID) {
+        
+            var xmlhttp = new XMLHttpRequest();
+
+            var cubemsstorage = 'http://www.bems.ee.eng.chula.ac.th:9062' + 
+                                '/axis2/services/FIAPStorage';  // modified in Ver 0.2
+            //var cubemsstorage = 'http://www.bems.ee.eng.chula.ac.th' + 
+            //                    '/axis2/services/FIAPStorage'; // original from Ver 0.1
+
+            xmlhttp.open('POST', cubemsstorage, true);
+            xmlhttp.setRequestHeader("SOAPAction", "http://soap.fiap.org/query");
+
+             var xml_data = 
+                 '<?xml version="1.0" encoding="UTF-8"?>' + 
+                 '<s:Envelope' +
+                 ' xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">' +
+                     '<s:Body>' +
+                         '<query>' +
+                             '<transport xmlns="http://gutp.jp/fiap/2009/11/">' +
+                                 '<header>' +
+                                     '<query id="12ed9de4-1c48-4b08-a41d-dac067fc1c0d"' +
+                                     ' type="storage"' +
+                                     ' acceptableSize="1000">' + 
+                                         pointID +
+                                     '</query>' +
+                                 '</header>' +
+                             '</transport>' +
+                         '</query>' + 
+                     '</s:Body>' +
+                 '</s:Envelope>';
+
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == xmlhttp.DONE) {
+                if (xmlhttp.status == 200) {
+
+                        temp = document.getElementById("fetched data");
+                        temp.innerHTML = this.responseText;
+                        
+                        // Ver 0.3 extract list of time and value pairs
+
+                        x = this.responseXML.getElementsByTagName("value");
+                        html = "";
+
+                        for (var i = 0; i < x.length; i++) {
+                            t = x[i].getAttribute("time");
+                            v = x[i].innerHTML;
+                            html += "<li>Time = " + t + " Value = " + v + "</li>";
+                        }
+
+                        temp = document.getElementById("fetched time and value");
+                        temp.innerHTML = html;
+            }}}
+            
+            xmlhttp.send(xml_data);
+            
+        }
+        
+        
+        function entered_pointkey() {
+		    var textbox = document.getElementById('pointkey');
+		    return textbox.value;
+		}
+
+    </script>
+    
+</head>
+
+<body>
+
+    <h1> 2102541 IoT Fundamental on CU-BEMS</h1>
+
+    <h2> Fetch Data from CU-BEMS</h2>
+    <h2> Please enter point key:</h2>
+
+	<h4> To get the latest value ... </h4>
+    <p>
+    &lt;key id="bems.ee.eng.chula.ac.th/energy_consumption/department"
+     attrName="time" select="maximum">&lt;/key>
+	</p>
+
+	<h4> To get the values collected in a time interval ... </h4>
+    <!--Ver 0.3 change from year 2019 to 2021 in point-id -->
+    <p>    
+    &lt;key id="bems.ee.eng.chula.ac.th/energy_consumption/department"
+     attrName="time" gteq="2021-01-31T00:00:00+07:00"
+     lt="2021-01-31T00:10:00+07:00">&lt;/key>
+    </p> 
+
+    <input type="text" size=240 id="pointkey">
+    <input type="button" value="Start FETCH" 
+           onclick="cubemsfetch1888(entered_pointkey());" />
+
+    <h2> Fetched result:</h2>
+	<textarea rows="10" cols="100" style="border:none;" id="fetched data">
+	</textarea>
+
+    <!--Ver 0.3 show list of time and value pairs-->
+    <h2> Fetched time and value:</h2>
+    <ul rows="10" cols="100" style="border:none;" id="fetched time and value">
+    </ul>
+
+</body>
+
+</html>

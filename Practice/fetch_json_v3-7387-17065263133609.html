@@ -1,0 +1,124 @@
+<!--File: fetch_json_v2.html
+
+Class: 2102541 IoT Fundamentals
+Department of Electrical Engineering
+Faculty of Engineering, Chulalongkorn University
+
+Code Purpose:
+
+To give students an example of how to fetch public data with 
+REST API and display obtainable JSON as list, table and plot
+
+Ver 3 Written by: Dr C Aswakul (29 Jan 2024)
+-->
+<!DOCTYPE html>
+<html>
+
+    <head>
+    <style> 
+        td { 
+            text-align: center; 
+        }
+    </style> 
+
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+
+    </head>
+
+    <body>
+
+        <h1> 2102541 IoT Fundamental:
+        Fetch JSON with REST API and Display as List, Table and Plot</h1>
+
+        <p id="time"></p>
+
+        <a href="https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series/globe/land/12/12/1850-2023">Source: https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series/globe/land/12/12/1850-2023</a>
+
+        <p>Remark: Temperature anomaly = difference from a reference long-term average value. A positive anomaly indicates that the observed temperature was warmer than the reference value. A negative anomaly indicates that the observed temperature was cooler than the reference value.</p>
+
+        <ul></ul>
+
+        <table id='table'> 
+            <tr> 
+                <th>Year</th> 
+                <th>On-Land Temperature Anomaly (Celcius)</th> 
+            </tr> 
+        </table>
+
+        <div id='barchart'></div>
+
+    </body>
+
+    <script>
+
+        let myList = document.querySelector('ul');
+        let year_val = new Array();
+        let onland_temperature_anomaly_val = new Array();
+
+        fetch('https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series/globe/land/12/1/1850-2023/data.json')
+
+        .then(function(response) {
+
+            if (!response.ok) {
+                throw new Error("HTTP error, status = " + response.status);
+            }
+            return response.json();
+
+        }).then(function(json) {
+
+            let k = Object.keys(json['data'])
+
+            for (var i = 0; i < k.length; i++) {
+
+                // create list items //
+                var listItem = document.createElement('li');
+                listItem.innerHTML =  'Year: ' + k[i];
+                listItem.innerHTML += '   on-land temperature anomaly: ' + json['data'][k[i]] + ' Celcius';
+                myList.appendChild(listItem);
+
+                // create table rows //
+                var rowItem = document.getElementById("table").insertRow(-1);
+                rowItem.insertCell(0).innerHTML = k[i];
+                rowItem.insertCell(1).innerHTML = json['data'][k[i]];
+
+                // collect plot data values //
+                year_val[i] = k[i];
+                onland_temperature_anomaly_val[i] = json['data'][k[i]];
+
+            }
+
+
+            // crate plot //
+
+            var data_style = {
+              title: 'On-Land Tempearture Anomaly (Celcius)',
+              xaxis: {
+                tickangle: -90
+              }
+            };
+
+
+            var data = [{
+              x: year_val.slice(1,year_val.length),
+              y: onland_temperature_anomaly_val.slice(1,onland_temperature_anomaly_val.length),
+              type: 'bar',
+              marker: {
+                color: 'rgb(100,0,0)',
+                opacity: 0.5,
+              }
+            }];
+
+
+            Plotly.newPlot('barchart', data, data_style);
+
+
+        }).catch(function(error) {
+
+            var p = document.createElement('p');
+            p.appendChild(document.createTextNode('Error: ' + error.message));
+            document.body.insertBefore(p, myList);
+
+        });
+
+    </script>
+</html>
